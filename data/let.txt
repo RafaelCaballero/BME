@@ -1,0 +1,13 @@
+let
+    Origen = Web.BrowserContents("https://www.ine.es/jaxiT3/Datos.htm?t=9947"),
+    #"Tabla extraída a partir de HTML" = Html.Table(Origen, {{"Column1", "TABLE[id='tablaDatos'] > * > TR > TD[rowspan=""2""]:not([colspan]):nth-child(1):nth-last-child(2), TABLE[id='tablaDatos'] > * > TR > TH:not([colspan]):not([rowspan]):nth-child(1):nth-last-child(2)"}, {"Column2", "TABLE[id='tablaDatos'] > * > TR > TD[rowspan=""2""]:not([colspan]):nth-child(1):nth-last-child(2) + TH:not([colspan]):not([rowspan]):nth-child(2):nth-last-child(1), TABLE[id='tablaDatos'] > * > TR > TH:not([colspan]):not([rowspan]):nth-child(1):nth-last-child(1), TABLE[id='tablaDatos'] > * > TR > TH:not([colspan]):not([rowspan]):nth-child(1):nth-last-child(2) + TD:not([colspan]):not([rowspan]):nth-child(2):nth-last-child(1)"}}, [RowSelector="TABLE[id='tablaDatos'] > * > TR"]),
+    #"Encabezados promovidos" = Table.PromoteHeaders(#"Tabla extraída a partir de HTML", [PromoteAllScalars=true]),
+    #"Tipo cambiado" = Table.TransformColumnTypes(#"Encabezados promovidos",{{"", type text}, {"Renta neta media por persona", Int64.Type}}),
+    #"Filas superiores quitadas" = Table.Skip(#"Tipo cambiado",2),
+    #"Columnas con nombre cambiado" = Table.RenameColumns(#"Filas superiores quitadas",{{"", "Comunidad"}}),
+    #"Texto extraído después del delimitador" = Table.TransformColumns(#"Columnas con nombre cambiado", {{"Comunidad", each Text.AfterDelimiter(_, " "), type text}}),
+    #"Texto en mayúsculas" = Table.TransformColumns(#"Texto extraído después del delimitador",{{"Comunidad", Text.Upper, type text}}),
+    #"Texto recortado" = Table.TransformColumns(#"Texto en mayúsculas",{{"Comunidad", Text.Trim, type text}}),
+    #"Texto limpio" = Table.TransformColumns(#"Texto recortado",{{"Comunidad", Text.Clean, type text}})
+in
+    #"Texto limpio"
